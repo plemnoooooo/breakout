@@ -6,7 +6,8 @@ pygame.init()
 # Game variables
 SCREEN_COLOR = "black"
 
-screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+screen_info = pygame.display.Info()
+screen = pygame.display.set_mode((screen_info.current_w, screen_info.current_h))
 clock = pygame.time.Clock()
 
 running = True
@@ -24,10 +25,21 @@ player.bottom = int(screen.get_height() - PLAYER_BOTTOM)
 BALL_BOTTOM = 90
 BALL_RADIUS = 10
 BALL_COLOR = "white"
-BALL_SPEED = (100, 100)
+BALL_SPEED = (300, 300)
 
 ball = pygame.Rect(screen.get_width() / 2, screen.get_height() - BALL_BOTTOM, BALL_RADIUS, BALL_RADIUS)
 ball_vel = pygame.Vector2(1, 1)
+
+# Brick variables
+BRICKS_X = 6
+BRICKS_Y = 3
+BRICK_GAP_X = 10
+BRICK_GAP_Y = 10
+BRICK_COLOR = "green"
+BRICK_WIDTH = (screen.get_width() - (BRICK_GAP_X * (BRICKS_X - 1))) / BRICKS_X
+BRICK_HEIGHT = 20 # (screen.get_height() - (BRICK_GAP_Y * (BRICKS_Y - 1))) / BRICKS_Y
+
+bricks: list[pygame.Rect] = [t for ts in [[pygame.Rect(x * (BRICK_WIDTH + BRICK_GAP_X), y * (BRICK_HEIGHT + BRICK_GAP_Y), BRICK_WIDTH, BRICK_HEIGHT) for x in range(BRICKS_X)] for y in range(BRICKS_Y)] for t in ts]
 
 # Functions
 def get_side_collisions(rect: pygame.Rect, others: list[pygame.Rect]) -> tuple[list[bool], ...]:
@@ -53,12 +65,25 @@ while running:
     ball.centerx += int(ball_vel.x * BALL_SPEED[0] * dt)
     ball.centery += int(ball_vel.y * BALL_SPEED[1] * dt)
 
-    collisions = get_side_collisions(ball, [player])
+    for brick in bricks:
+        screen.fill(BRICK_COLOR, brick)
+        
+    collisions = get_side_collisions(ball, [player, *bricks])
 
-    if any(any(i[:2]) for i in collisions) or ball.top < 0 or ball.bottom > screen.get_height():
+    if any(any(i[:2]) for i in collisions) or ball.top <= 0:
         ball_vel.y *= -1
-    elif any(any(i[2:]) for i in collisions) or ball.left < 0 or ball.right > screen.get_width():
+    elif any(any(i[2:]) for i in collisions) or ball.left <= 0 or ball.right >= screen.get_width():
         ball_vel.x *= -1
+
+    ball.x = int(pygame.math.clamp(ball.x, 0, screen.get_width() - ball.width))
+    ball.y = int(pygame.math.clamp(ball.y, 0, screen.get_height() - ball.height))
+    
+    if ball.bottom >= screen.get_height():
+        running = False
+
+    for i in range(len(collisions) - 1):
+        if any(collisions[i + 1]):
+            bricks.remove(bricks[i])
     
     pygame.display.flip()
     dt = clock.tick(60) / 1000
