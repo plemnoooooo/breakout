@@ -1,32 +1,35 @@
 import pygame
 
+pygame.init()
+
+# Game variables
+SCREEN_COLOR = "black"
+
+screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+clock = pygame.time.Clock()
+
 running = True
 dt = 0
 
-pygame.init()
-screen = pygame.display.set_mode((1280, 720))
-clock = pygame.time.Clock()
+# Player variables
+PLAYER_BOTTOM_MARGIN = 30
+PLAYER_SIZE = (180, 30)
+PLAYER_COLOR = "red"
+PLAYER_SPEED = (300, 300)
 
-player_pos = pygame.Vector2(screen.get_width() / 2, screen.get_height() / 2)
-                            
+player = pygame.Rect(pygame.Vector2(), PLAYER_SIZE)
+player.bottom = int(screen.get_height() - PLAYER_BOTTOM_MARGIN)
+
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
 
-    screen.fill("purple")
+    screen.fill(SCREEN_COLOR)
+    screen.fill(PLAYER_COLOR, player)
 
-    pygame.draw.circle(screen, "red", player_pos, 40)
-
-    keys = pygame.key.get_pressed()
-    if keys[pygame.K_w]:
-        player_pos.y -= 300 * dt
-    if keys[pygame.K_s]:
-        player_pos.y += 300 * dt
-    if keys[pygame.K_a]:
-        player_pos.x -= 300 * dt
-    if keys[pygame.K_d]:
-        player_pos.x += 300 * dt              
+    mouse = pygame.mouse.get_pos()
+    player.centerx = int(pygame.math.clamp(mouse[0], 0, screen.get_width() - (PLAYER_SIZE[0] / 2)))
     
     pygame.display.flip()
     dt = clock.tick(60) / 1000
